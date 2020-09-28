@@ -1,25 +1,45 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React, { useEffect } from "react";
+import { RecoilRoot, atom, useRecoilValue, useSetRecoilState } from "recoil";
+import "./App.css";
+
+const counterStateAtom = atom({
+  key: "counterState",
+  default: 0,
+});
+
+const tunnel = new WeakMap();
+
+function Inter() {
+  // setterだけを取り出すことで再レンダリングを回避する
+  const setCount = useSetRecoilState(counterStateAtom);
+  // weakMapにsetCountを放り込んでどこからでも使えるようにする
+  tunnel.set(counterStateAtom, [setCount]);
+  // setCountが実行されてもここは実行されない！
+  useEffect(() => console.log("inter re-rendered"));
+  return (
+    <div>
+      <UseTunnel></UseTunnel>
+    </div>
+  );
+}
+
+function UseTunnel() {
+  // weakMapからsetCountを読み出す
+  const [setCount] = tunnel.get(counterStateAtom);
+  // useRecoilValueで値だけ取り出す
+  const count = useRecoilValue(counterStateAtom);
+  // setCountを実行するとここだけ実行される
+  useEffect(() => console.log("UseTunnel re-rendered"));
+  return <div onClick={() => setCount(count + 1)}>click: {count}</div>;
+}
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <RecoilRoot>
+      <div className="App">
+        <Inter />
+      </div>
+    </RecoilRoot>
   );
 }
 
