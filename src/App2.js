@@ -11,7 +11,7 @@ class Counter {
   }
   countMul = computedFn(function (num) {
     return this.count * num;
-  });
+  }).bind(this);
 }
 decorate(Counter, {
   count: observable,
@@ -42,10 +42,18 @@ function UseTunnel() {
   // weakMapからsetCountを読み出す
   const [setCount] = tunnel.get(counterStore);
   // useRecoilValueで値だけ取り出す
-  const count = useObserver(() => counterStore.count);
+  const [count, countMul, count2x] = useObserver(() => [
+    counterStore.count,
+    counterStore.countMul,
+    counterStore.count2x,
+  ]);
   // setCountを実行するとここだけ実行される
   useEffect(() => console.log("mobx UseTunnel re-rendered"));
-  return <div onClick={() => setCount(count + 1)}>click: {count}</div>;
+  return (
+    <div onClick={() => setCount(count + 1)}>
+      click: {count}, clickMul3: {countMul(3)}, count2x: {count2x}
+    </div>
+  );
 }
 
 function App() {
